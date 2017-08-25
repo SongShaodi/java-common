@@ -1,5 +1,7 @@
 me/songsd/common/util/ListUtil.class
 me/songsd/common/util/StringUtils.class
 me/songsd/common/model/Pair.class
-me/songsd/common/util/ListUtil$FieldRefactor.class
+me/songsd/common/util/JSONUtil.class
 me/songsd/common/collection/Lists.class
+me/songsd/common/util/ListUtil$FieldRefactor.class
+me/songsd/common/util/ChineseCharUtil.class
