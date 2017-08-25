@@ -4,6 +4,6 @@ java-common.iml
 
 *.DS_STORE
 
-/target/*
+target/*
 
 
