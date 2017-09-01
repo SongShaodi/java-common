@@ -23,10 +23,10 @@ public class LocalQueue<T> {
     public LocalQueue(BatchProcessor<T> batchProcessor) {
         new Thread(() -> {
             while (queue != null) {
-                List<T> processEffects = new ArrayList<>();
-                int insertSize = queue.drainTo(processEffects, batchSize);
+                List<T> toProcesses = new ArrayList<>();
+                int insertSize = queue.drainTo(toProcesses, batchSize);
                 if (insertSize > 0) {
-                    batchProcessor.process(processEffects);
+                    batchProcessor.process(toProcesses);
                 }
                 String loggerInfo = "TQueue size = " + queue.size() +
                         ", this time insert size = " + insertSize;
@@ -43,6 +43,16 @@ public class LocalQueue<T> {
                 }
             }
         }).start();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            logger.info("in shutdown hook, residualSize = ", queue.size());
+            List<T> toProcesses = new ArrayList<>();
+            int residualSize = queue.drainTo(toProcesses);
+            if (residualSize > 0) {
+                batchProcessor.process(toProcesses);
+            }
+        }));
+
     }
 
     public LocalQueue(SingleProcessor<T> singleProcessor) {
@@ -64,6 +74,13 @@ public class LocalQueue<T> {
                 }
             }
         }).start();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            logger.info("in shutdown hook, residualSize = ", queue.size());
+            while (!queue.isEmpty()) {
+                singleProcessor.process(queue.poll());
+            }
+        }));
     }
 
     public interface BatchProcessor<T> {

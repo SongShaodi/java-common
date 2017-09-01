@@ -13,7 +13,7 @@ public class LocalQueueTest {
         LocalQueue<Integer> queue = new LocalQueue<>((LocalQueue.BatchProcessor<Integer>) integers -> {
             try {
                 Thread.sleep(30);
-                System.out.println(integers.size());
+                System.out.println(integers.size() + "--" + integers.get(integers.size() - 1));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -25,7 +25,7 @@ public class LocalQueueTest {
             }
         }
 
-        Thread.sleep(100000);
+        Thread.sleep(5000);
     }
 
 }
