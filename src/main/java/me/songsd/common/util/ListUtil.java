@@ -36,11 +36,11 @@ public class ListUtil {
                 if (cmpObj1 instanceof Integer) {
                     int cmpVal1 = Integer.parseInt(cmpObj1.toString());
                     int cmpVal2 = Integer.parseInt(cmpObj2.toString());
-                    retVal = compare(cmpVal1, cmpVal2);
+                    retVal = Integer.compare(cmpVal1, cmpVal2);
                 } else if (cmpObj1 instanceof Long) {
                     long cmpVal1 = Long.parseLong(cmpObj1.toString());
                     long cmpVal2 = Long.parseLong(cmpObj2.toString());
-                    retVal = compare(cmpVal1, cmpVal2);
+                    retVal = Long.compare(cmpVal1, cmpVal2);
                 } else if (cmpObj1 instanceof Double) {
                     double cmpVal1 = Double.parseDouble(cmpObj1.toString());
                     double cmpVal2 = Double.parseDouble(cmpObj2.toString());
@@ -54,14 +54,6 @@ public class ListUtil {
             }
             return retVal;
         });
-    }
-
-    private static int compare(int x, int y) {
-        return (x < y) ? -1 : ((x == y) ? 0 : 1);
-    }
-
-    private static int compare(long x, long y) {
-        return (x < y) ? -1 : ((x == y) ? 0 : 1);
     }
 
     public static <F, T> List<F> refactorField(List<T> collection, FieldRefactor<F, T> fieldRefactor) {
@@ -88,8 +80,9 @@ public class ListUtil {
     }
 
     public static <T> List<T> subListByOffset(List<T> list, int offset, int limit) {
-        if (list == null || offset > list.size())
+        if (list == null || offset > list.size()) {
             return new ArrayList<>();
+        }
 
         int endIndex = Math.min(offset + limit, list.size());
         return list.subList(offset, endIndex);
@@ -105,7 +98,6 @@ public class ListUtil {
         for (T tObject : list) {
             try {
                 String methodStr = ListUtil.getMethodStr(field);
-                System.out.println(tObject.getClass());
                 Method method = tObject.getClass().getMethod(methodStr);
 
                 Object keyObj = method.invoke(tObject);
