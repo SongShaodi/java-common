@@ -28,7 +28,7 @@ public class LocalQueue<T> {
                 if (insertSize > 0) {
                     batchProcessor.process(toProcesses);
                 }
-                String loggerInfo = "TQueue size = " + queue.size() +
+                String loggerInfo = "local queue residual size = " + queue.size() +
                         ", this time insert size = " + insertSize;
                 if (queue.size() > warningLine) {
                     logger.warn(loggerInfo);
@@ -60,7 +60,7 @@ public class LocalQueue<T> {
             while (queue != null) {
                 T t = queue.poll();
                 singleProcessor.process(t);
-                String loggerInfo = "TQueue size = " + queue.size();
+                String loggerInfo = "local queue residual size = " + queue.size();
                 if (queue.size() > warningLine) {
                     logger.warn(loggerInfo);
                 } else {
