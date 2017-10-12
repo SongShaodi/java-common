@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -16,69 +18,33 @@ public class LocalQueue<T> {
 
     private LinkedBlockingQueue<T> queue = new LinkedBlockingQueue<>();
 
-    private int warningLine = 100;
-    private int freeTimeSleepDuration = 100;
-    private int batchSize = 100;
+    private int maxBatchSize = 100;
 
-    public LocalQueue(BatchProcessor<T> batchProcessor) {
-        new Thread(() -> {
-            while (queue != null) {
-                List<T> toProcesses = new ArrayList<>();
-                int insertSize = queue.drainTo(toProcesses, batchSize);
-                if (insertSize > 0) {
-                    batchProcessor.process(toProcesses);
+    public LocalQueue(BatchProcessor<T> batchProcessor, String name, long period) {
+        new Timer().schedule(new TimerTask() {
+            @Override
+            public void run() {
+                List<T> processEffects = new ArrayList<>();
+                int batchSize = queue.drainTo(processEffects, maxBatchSize);
+                if (batchSize > 0) {
+                    batchProcessor.process(processEffects);
                 }
-                String loggerInfo = "local queue residual size = " + queue.size() +
-                        ", this time insert size = " + insertSize;
-                if (queue.size() > warningLine) {
+
+                String loggerInfo = name + " residual size = " + queue.size() + ", process size = " + batchSize;
+                if (queue.size() > 0) {
                     logger.warn(loggerInfo);
                 } else {
-                    try {
-                        Thread.sleep(freeTimeSleepDuration);
-                    } catch (InterruptedException e) {
-                        logger.error("InterruptedException occured in consumer of TQueue, e - ", e);
-                        Thread.currentThread().interrupt();
-                    }
                     logger.info(loggerInfo);
                 }
             }
-        }).start();
+        }, 0, period);
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            logger.info("in shutdown hook, residualSize = ", queue.size());
             List<T> toProcesses = new ArrayList<>();
             int residualSize = queue.drainTo(toProcesses);
+            logger.info("{} in shutdown hook, residualSize = {}", name, residualSize);
             if (residualSize > 0) {
                 batchProcessor.process(toProcesses);
-            }
-        }));
-
-    }
-
-    public LocalQueue(SingleProcessor<T> singleProcessor) {
-        new Thread(() -> {
-            while (queue != null) {
-                T t = queue.poll();
-                singleProcessor.process(t);
-                String loggerInfo = "local queue residual size = " + queue.size();
-                if (queue.size() > warningLine) {
-                    logger.warn(loggerInfo);
-                } else {
-                    try {
-                        Thread.sleep(freeTimeSleepDuration);
-                    } catch (InterruptedException e) {
-                        logger.error("InterruptedException occured in consumer of TQueue, e - ", e);
-                        Thread.currentThread().interrupt();
-                    }
-                    logger.info(loggerInfo);
-                }
-            }
-        }).start();
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            logger.info("in shutdown hook, residualSize = ", queue.size());
-            while (!queue.isEmpty()) {
-                singleProcessor.process(queue.poll());
             }
         }));
     }
@@ -87,23 +53,11 @@ public class LocalQueue<T> {
         void process(List<T> tList);
     }
 
-    public interface SingleProcessor<T> {
-        void process(T t);
-    }
-
     public boolean offer(T t) {
         return queue.offer(t);
     }
 
-    public void setWarningLine(int warningLine) {
-        this.warningLine = warningLine;
-    }
-
-    public void setFreeTimeSleepDuration(int freeTimeSleepDuration) {
-        this.freeTimeSleepDuration = freeTimeSleepDuration;
-    }
-
-    public void setBatchSize(int batchSize) {
-        this.batchSize = batchSize;
+    public void setMaxBatchSize(int maxBatchSize) {
+        this.maxBatchSize = maxBatchSize;
     }
 }
